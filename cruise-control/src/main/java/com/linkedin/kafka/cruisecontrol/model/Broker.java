@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.kafka.common.TopicPartition;
 
@@ -194,7 +195,30 @@ public class Broker implements Serializable, Comparable<Broker> {
     Map<Integer, Replica> topicReplicas = _topicReplicas.get(topic);
     return topicReplicas == null ? 0 : topicReplicas.size();
   }
+  
+  /**
+   * Get the leader replicas for topic.
+   * 
+   * @param topic Topic for which the replica count will be returned.
+   * @return The number of leader replicas from the given topic in this broker.
+   */
+  public Collection<Replica> leaderReplicasOfTopicInBroker(String topic) {
+    Map<Integer, Replica> topicReplicas = _topicReplicas.get(topic);
+      
+    return topicReplicas == null ? Collections.emptySet() : topicReplicas.values().stream().filter(Replica::isLeader).collect(Collectors.toSet());
+  }
 
+  /**
+   * Get number of leader replicas from the given topic in this broker.
+   *
+   * @param topic Topic for which the replica count will be returned.
+   * @return The number of leader replicas from the given topic in this broker.
+   */
+  public int numLeaderReplicasOfTopicInBroker(String topic) {
+    Map<Integer, Replica> topicReplicas = _topicReplicas.get(topic);
+    return topicReplicas == null ? 0 : (int) topicReplicas.values().stream().filter(Replica::isLeader).count();
+  }
+  
   /**
    * @return True if the broker is not dead, false otherwise.
    */
@@ -304,26 +328,6 @@ public class Broker implements Serializable, Comparable<Broker> {
         return result;
       }
     };
-  }
-
-  /**
-   * get the load density of a resource on a replica for sorting. This is to help reduce the movement cost.
-   */
-  private double loadDensity(Replica replica, Resource resource) {
-    double expectedLoad = replica.load().expectedUtilizationFor(resource);
-    if (expectedLoad == 0.0) {
-      return 0.0;
-    } else if (resource == Resource.DISK) {
-      return expectedLoad;
-    } else {
-      double diskLoad = replica.load().expectedUtilizationFor(Resource.DISK);
-      if (diskLoad == 0.0) {
-        // Some big number
-        return 1000000.0;
-      } else {
-        return expectedLoad / diskLoad;
-      }
-    }
   }
 
   /**

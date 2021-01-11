@@ -36,6 +36,7 @@ public class ClusterModelStats {
   private final Map<Statistic, Number> _replicaStats;
   private final Map<Statistic, Number> _leaderReplicaStats;
   private final Map<Statistic, Number> _topicReplicaStats;
+  private final Map<Statistic, Number> _topicLeaderReplicaStats;
   private int _numBrokers;
   private int _numReplicasInCluster;
   private int _numPartitionsWithOfflineReplicas;
@@ -61,6 +62,7 @@ public class ClusterModelStats {
     _replicaStats = new HashMap<>();
     _leaderReplicaStats = new HashMap<>();
     _topicReplicaStats = new HashMap<>();
+    _topicLeaderReplicaStats = new HashMap<>();
     _numBrokers = 0;
     _numReplicasInCluster = 0;
     _numPartitionsWithOfflineReplicas = 0;
@@ -90,6 +92,7 @@ public class ClusterModelStats {
     numForReplicas(clusterModel);
     numForLeaderReplicas(clusterModel);
     numForAvgTopicReplicas(clusterModel);
+    numForAvgTopicLeaderReplicas(clusterModel);
     _utilizationMatrix = clusterModel.utilizationMatrix();
     _numSnapshotWindows = clusterModel.load().numWindows();
     _monitoredPartitionsRatio = clusterModel.monitoredPartitionsRatio();
@@ -131,6 +134,14 @@ public class ClusterModelStats {
   public Map<Statistic, Number> topicReplicaStats() {
     return _topicReplicaStats;
   }
+  
+  /**
+   * @return Topic leader replica stats for the cluster instance that the object was populated with.
+   */
+  public Map<Statistic, Number> topicLeaderReplicaStats() {
+    return _topicLeaderReplicaStats;
+  }
+
 
   /**
    * @return The number of brokers for the cluster instance that the object was populated with.
@@ -227,7 +238,8 @@ public class ClusterModelStats {
                                                        _potentialNwOutUtilizationStats,
                                                        _replicaStats,
                                                        _leaderReplicaStats,
-                                                       _topicReplicaStats).getJsonStructure());
+                                                       _topicReplicaStats,
+                                                       _topicLeaderReplicaStats).getJsonStructure());
     return statMap;
   }
 
@@ -244,7 +256,8 @@ public class ClusterModelStats {
                                       _potentialNwOutUtilizationStats,
                                       _replicaStats,
                                       _leaderReplicaStats,
-                                      _topicReplicaStats).toString();
+                                      _topicReplicaStats,
+                                      _topicLeaderReplicaStats).toString();
   }
 
   /**
@@ -457,6 +470,48 @@ public class ClusterModelStats {
 
     _topicReplicaStats.put(Statistic.AVG, _topicReplicaStats.get(Statistic.AVG).doubleValue() / _numTopics);
     _topicReplicaStats.put(Statistic.ST_DEV, _topicReplicaStats.get(Statistic.ST_DEV).doubleValue() / _numTopics);
+  }
+  
+  /**
+   * Generate statistics for topic leader replicas in the given cluster.
+   * Average and standard deviation calculations are based on brokers not excluded for replica moves.
+   *
+   * @param clusterModel The state of the cluster.
+   */
+  private void numForAvgTopicLeaderReplicas(ClusterModel clusterModel) {
+    _topicLeaderReplicaStats.put(Statistic.AVG, 0.0);
+    _topicLeaderReplicaStats.put(Statistic.MAX, 0);
+    _topicLeaderReplicaStats.put(Statistic.MIN, Integer.MAX_VALUE);
+    _topicLeaderReplicaStats.put(Statistic.ST_DEV, 0.0);
+    
+    for (String topic : clusterModel.topics()) {
+      int maxTopicLeaderReplicasInBroker = 0;
+      int minTopicLeaderReplicasInBroker = Integer.MAX_VALUE;
+      for (Broker broker : clusterModel.brokers()) {
+        int numTopicLeaderReplicasInBroker = broker.numLeaderReplicasOfTopicInBroker(topic);
+        maxTopicLeaderReplicasInBroker = Math.max(maxTopicLeaderReplicasInBroker, numTopicLeaderReplicasInBroker);
+        minTopicLeaderReplicasInBroker = Math.min(minTopicLeaderReplicasInBroker, numTopicLeaderReplicasInBroker);
+      }
+      double avgTopicLeaderReplicas = ((double) clusterModel.numTopicLeaderReplicas(topic)) / _brokersAllowedReplicaMove.size(); 
+
+      // Standard deviation of leader replicas in brokers allowed replica move.
+      double variance = 0.0;
+      for (Broker broker : clusterModel.aliveBrokers()) {
+        if (_brokersAllowedReplicaMove.contains(broker.id())) {
+          variance += (Math.pow(broker.numLeaderReplicasOfTopicInBroker(topic) - avgTopicLeaderReplicas, 2) / _brokersAllowedReplicaMove.size());
+        }
+      }
+
+      _topicLeaderReplicaStats.put(Statistic.AVG, _topicLeaderReplicaStats.get(Statistic.AVG).doubleValue() + avgTopicLeaderReplicas);
+      _topicLeaderReplicaStats.put(Statistic.MAX,
+          Math.max(_topicLeaderReplicaStats.get(Statistic.MAX).intValue(), maxTopicLeaderReplicasInBroker));
+      _topicLeaderReplicaStats.put(Statistic.MIN,
+          Math.min(_topicLeaderReplicaStats.get(Statistic.MIN).intValue(), minTopicLeaderReplicasInBroker));
+      _topicLeaderReplicaStats.put(Statistic.ST_DEV, (Double) _topicLeaderReplicaStats.get(Statistic.ST_DEV) + Math.sqrt(variance));
+    }
+
+    _topicLeaderReplicaStats.put(Statistic.AVG, _topicLeaderReplicaStats.get(Statistic.AVG).doubleValue() / _numTopics);
+    _topicLeaderReplicaStats.put(Statistic.ST_DEV, _topicLeaderReplicaStats.get(Statistic.ST_DEV).doubleValue() / _numTopics);
   }
 
   /**

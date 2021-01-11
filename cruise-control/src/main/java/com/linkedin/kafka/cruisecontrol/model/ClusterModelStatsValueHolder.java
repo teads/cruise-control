@@ -23,23 +23,28 @@ public class ClusterModelStatsValueHolder {
   @JsonResponseField
   protected static final String TOPIC_REPLICAS = "topicReplicas";
   @JsonResponseField
+  protected static final String TOPIC_LEADER_REPLICAS = "topicLeaderReplicas";
+  @JsonResponseField
   protected static final String REPLICAS = "replicas";
   protected final Map<Resource, Double> _resourceUtilizationStats;
   protected final Double _potentialNwOutUtilizationStats;
   protected final Number _replicaStats;
   protected final Number _leaderReplicaStats;
   protected final Number _topicReplicaStats;
+  protected final Number _topicLeaderReplicaStats;
 
   public ClusterModelStatsValueHolder(Map<Resource, Double> resourceUtilizationStats,
                                       Double potentialNwOutUtilizationStats,
                                       Number replicaStats,
                                       Number leaderReplicaStats,
-                                      Number topicReplicaStats) {
+                                      Number topicReplicaStats,
+                                      Number topicLeaderReplicaStats) {
     _resourceUtilizationStats = resourceUtilizationStats;
     _potentialNwOutUtilizationStats = potentialNwOutUtilizationStats;
     _replicaStats = replicaStats;
     _leaderReplicaStats = leaderReplicaStats;
     _topicReplicaStats = topicReplicaStats;
+    _topicLeaderReplicaStats = topicLeaderReplicaStats;
   }
 
   protected Map<String, Object> getJsonStructure() {
@@ -52,15 +57,17 @@ public class ClusterModelStatsValueHolder {
     resourceMap.put(REPLICAS, _replicaStats);
     resourceMap.put(LEADER_REPLICAS, _leaderReplicaStats);
     resourceMap.put(TOPIC_REPLICAS, _topicReplicaStats);
+    resourceMap.put(TOPIC_LEADER_REPLICAS, _topicLeaderReplicaStats);
     return resourceMap;
   }
 
   @Override
   public String toString() {
-    return String.format("%s:%12.3f %s:%s %s:%s %s:%s}%n",
+    return String.format("%s:%12.3f %s:%s %s:%s %s:%s %s:%s}%n",
                          POTENTIAL_NW_OUT, _potentialNwOutUtilizationStats,
                          REPLICAS, _replicaStats,
                          LEADER_REPLICAS, _leaderReplicaStats,
-                         TOPIC_REPLICAS, _topicReplicaStats);
+                         TOPIC_REPLICAS, _topicReplicaStats,
+                         TOPIC_LEADER_REPLICAS, _topicLeaderReplicaStats);
   }
 }

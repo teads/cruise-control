@@ -74,6 +74,22 @@ public class Host implements Serializable {
     }
     return numTopicReplicas;
   }
+  
+  /**
+   * Get the number of leader replicas with the given topic name in this host.
+   *
+   * @param topic Name of the topic for which the number of leader replicas in this rack will be counted.
+   * @return Number of leader replicas with the given topic name in this host.
+   */
+  public int numTopicLeaderReplicas(String topic) {
+    int numTopicReplicas = 0;
+
+    for (Broker broker : _brokers.values()) {
+      numTopicReplicas += broker.numLeaderReplicasOfTopicInBroker(topic);
+    }
+    return numTopicReplicas;
+  }
+  
 
   /**
    * @return All the topics that have at least one partition on the host.

@@ -278,6 +278,27 @@ public class GoalUtils {
       }
     }
   }
+  
+  /**
+   * FIXME: from code point of view, is it possible for a replica to be offline and leader?
+   *
+   * Checks the leader replicas that are supposed to be moved away from the dead brokers or broken disks have been moved.
+   * If there are still leader replicas on the dead brokers or broken disks, throws an exception.
+   * @param clusterModel the cluster model to check.
+   * @param goalName Goal name for which the sanity check is executed.
+   * @throws OptimizationFailureException when there are still replicas on the dead brokers or on broken disks.
+   */
+  public static void ensureNoOfflineLeaderReplicas(ClusterModel clusterModel, String goalName)
+      throws OptimizationFailureException {
+    // Sanity check: No self-healing eligible replica should remain at a decommissioned broker or on broken disk.
+    for (Replica replica : clusterModel.selfHealingEligibleReplicas()) {
+      if (replica.isCurrentOffline() && replica.isLeader()) {
+        throw new OptimizationFailureException(String.format(
+            "[%s] Self healing failed to move the leader replica %s from %s broker %d (contains %d replicas).",
+            goalName, replica, replica.broker().state(), replica.broker().id(), replica.broker().replicas().size()));
+      }
+    }
+  }
 
   /**
    * Checks for the broker with broken disk, the partitions of the replicas used to be on its broken disk does not have
@@ -299,6 +320,30 @@ public class GoalUtils {
       }
     }
   }
+
+  /**
+   * FIXME: should we also handle non leader replicas?
+   *
+   * Checks for the broker with broken disk, the partitions of the replicas used to be on its broken disk does not have
+   * any replica on this broker.
+   * @param clusterModel the cluster model to check.
+   * @param goalName Goal name for which the sanity check is executed.
+   * @throws OptimizationFailureException when there are replicas hosted by broker with broken disk which belongs to the
+   * same partition as the replica used to be hosted on broken disks
+   */
+  public static void ensureLeaderReplicasMoveOffBrokersWithBadDisks(ClusterModel clusterModel, String goalName)
+      throws OptimizationFailureException {
+    for (Broker broker : clusterModel.brokersWithBadDisks()) {
+      for (Replica leader : broker.leaderReplicas()) {
+        if (!clusterModel.partition(leader.topicPartition()).canAssignReplicaToBroker(broker)) {
+          throw new OptimizationFailureException(String.format(
+              "[%s] A leader replica of partition %s has been moved back to broker %d, where it was originally hosted on a "
+              + "broken disk.", goalName, clusterModel.partition(leader.topicPartition()), leader.broker().id()));
+        }
+      }
+    }
+  }
+
 
   /**
    * Get a filtered set of leaders from the given broker based on given filtering requirements.
