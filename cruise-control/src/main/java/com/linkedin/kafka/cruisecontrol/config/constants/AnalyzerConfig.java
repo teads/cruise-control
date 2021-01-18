@@ -128,6 +128,35 @@ public class AnalyzerConfig {
       + " the value specified by this config, the limit is adjusted accordingly.";
 
   /**
+   * <code>topic.leader.replica.count.balance.threshold</code>
+   */
+  public static final String TOPIC_LEADER_REPLICA_COUNT_BALANCE_THRESHOLD_CONFIG = "topic.leader.replica.count.balance.threshold";
+  public static final double DEFAULT_TOPIC_LEADER_REPLICA_COUNT_BALANCE_THRESHOLD = 2.00;
+  public static final String TOPIC_LEADER_REPLICA_COUNT_BALANCE_THRESHOLD_DOC = "The maximum allowed extent of unbalance for "
+          + "leader replica distribution from each topic. For example, 1.80 means the highest topic leader replica count of a broker "
+          + "should not be above 1.80x of average leader replica count of all brokers for the same topic.";
+
+  /**
+   * <code>topic.leader.replica.count.balance.min.gap</code>
+   */
+  public static final String TOPIC_LEADER_REPLICA_COUNT_BALANCE_MIN_GAP_CONFIG = "topic.leader.replica.count.balance.min.gap";
+  public static final int DEFAULT_TOPIC_LEADER_REPLICA_COUNT_BALANCE_MIN_GAP = 2;
+  public static final String TOPIC_LEADER_REPLICA_COUNT_BALANCE_MIN_GAP_DOC = "The minimum allowed gap between a balance limit and"
+          + " the average leader replica count for each topic. A balance limit is set via topic.leader.replica.count.balance.threshold config."
+          + " If the difference between the computed limit and the average leader replica count for the relevant topic is smaller than"
+          + " the value specified by this config, the limit is adjusted accordingly.";
+
+  /**
+   * <code>topic.leader.replica.count.balance.max.gap</code>
+   */
+  public static final String TOPIC_LEADER_REPLICA_COUNT_BALANCE_MAX_GAP_CONFIG = "topic.leader.replica.count.balance.max.gap";
+  public static final int DEFAULT_TOPIC_LEADER_REPLICA_COUNT_BALANCE_MAX_GAP = 40;
+  public static final String TOPIC_LEADER_REPLICA_COUNT_BALANCE_MAX_GAP_DOC = "The maximum allowed gap between a balance limit and"
+          + " the average leader replica count for each topic. A balance limit is set via topic.leader.replica.count.balance.threshold config."
+          + " If the difference between the computed limit and the average leader replica count for the relevant topic is greater than"
+          + " the value specified by this config, the limit is adjusted accordingly.";
+
+  /**
    * <code>cpu.capacity.threshold</code>
    */
   public static final String CPU_CAPACITY_THRESHOLD_CONFIG = "cpu.capacity.threshold";
@@ -410,6 +439,24 @@ public class AnalyzerConfig {
                     .define(TOPIC_REPLICA_COUNT_BALANCE_MAX_GAP_CONFIG,
                             ConfigDef.Type.INT,
                             DEFAULT_TOPIC_REPLICA_COUNT_BALANCE_MAX_GAP,
+                            atLeast(1),
+                            ConfigDef.Importance.MEDIUM,
+                            TOPIC_REPLICA_COUNT_BALANCE_MAX_GAP_DOC)
+                    .define(TOPIC_LEADER_REPLICA_COUNT_BALANCE_THRESHOLD_CONFIG,
+                            ConfigDef.Type.DOUBLE,
+                            DEFAULT_TOPIC_LEADER_REPLICA_COUNT_BALANCE_THRESHOLD,
+                            atLeast(1),
+                            ConfigDef.Importance.HIGH,
+                            TOPIC_LEADER_REPLICA_COUNT_BALANCE_THRESHOLD_DOC)
+                    .define(TOPIC_LEADER_REPLICA_COUNT_BALANCE_MIN_GAP_CONFIG,
+                            ConfigDef.Type.INT,
+                            DEFAULT_TOPIC_LEADER_REPLICA_COUNT_BALANCE_MIN_GAP,
+                            atLeast(0),
+                            ConfigDef.Importance.MEDIUM,
+                            TOPIC_LEADER_REPLICA_COUNT_BALANCE_MIN_GAP_DOC)
+                    .define(TOPIC_LEADER_REPLICA_COUNT_BALANCE_MAX_GAP_CONFIG,
+                            ConfigDef.Type.INT,
+                            DEFAULT_TOPIC_LEADER_REPLICA_COUNT_BALANCE_MAX_GAP,
                             atLeast(1),
                             ConfigDef.Importance.MEDIUM,
                             TOPIC_REPLICA_COUNT_BALANCE_MAX_GAP_DOC)

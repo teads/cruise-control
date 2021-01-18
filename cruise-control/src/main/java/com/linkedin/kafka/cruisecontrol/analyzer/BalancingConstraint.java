@@ -23,6 +23,9 @@ public class BalancingConstraint {
   private final double _topicReplicaBalancePercentage;
   private final int _topicReplicaBalanceMinGap;
   private final int _topicReplicaBalanceMaxGap;
+  private final double _topicLeaderReplicaBalancePercentage;
+  private final int _topicLeaderReplicaBalanceMinGap;
+  private final int _topicLeaderReplicaBalanceMaxGap;
   private final double _goalViolationDistributionThresholdMultiplier;
   private final Map<Resource, Double> _capacityThreshold;
   private final Map<Resource, Double> _lowUtilizationThreshold;
@@ -62,6 +65,9 @@ public class BalancingConstraint {
     _topicReplicaBalancePercentage = config.getDouble(AnalyzerConfig.TOPIC_REPLICA_COUNT_BALANCE_THRESHOLD_CONFIG);
     _topicReplicaBalanceMinGap = config.getInt(AnalyzerConfig.TOPIC_REPLICA_COUNT_BALANCE_MIN_GAP_CONFIG);
     _topicReplicaBalanceMaxGap = config.getInt(AnalyzerConfig.TOPIC_REPLICA_COUNT_BALANCE_MAX_GAP_CONFIG);
+    _topicLeaderReplicaBalancePercentage = config.getDouble(AnalyzerConfig.TOPIC_LEADER_REPLICA_COUNT_BALANCE_THRESHOLD_CONFIG);
+    _topicLeaderReplicaBalanceMinGap = config.getInt(AnalyzerConfig.TOPIC_LEADER_REPLICA_COUNT_BALANCE_MIN_GAP_CONFIG);
+    _topicLeaderReplicaBalanceMaxGap = config.getInt(AnalyzerConfig.TOPIC_LEADER_REPLICA_COUNT_BALANCE_MAX_GAP_CONFIG);
     _goalViolationDistributionThresholdMultiplier = config.getDouble(AnalyzerConfig.GOAL_VIOLATION_DISTRIBUTION_THRESHOLD_MULTIPLIER_CONFIG);
   }
 
@@ -132,6 +138,27 @@ public class BalancingConstraint {
    */
   public int topicReplicaBalanceMaxGap() {
     return _topicReplicaBalanceMaxGap;
+  }
+
+  /**
+   * @return Topic leader replica balance percentage for {@link com.linkedin.kafka.cruisecontrol.analyzer.goals.TopicLeaderReplicaDistributionGoal}.
+   */
+  public double topicLeaderReplicaBalancePercentage() {
+    return _topicLeaderReplicaBalancePercentage;
+  }
+
+  /**
+   * @return Topic leader replica balance minimum gap for {@link com.linkedin.kafka.cruisecontrol.analyzer.goals.TopicLeaderReplicaDistributionGoal}.
+   */
+  public int topicLeaderReplicaBalanceMinGap() {
+    return _topicLeaderReplicaBalanceMinGap;
+  }
+
+  /**
+   * @return Topic leader replica balance maximum gap for {@link com.linkedin.kafka.cruisecontrol.analyzer.goals.TopicLeaderReplicaDistributionGoal}.
+   */
+  public int topicLeaderReplicaBalanceMaxGap() {
+    return _topicLeaderReplicaBalanceMaxGap;
   }
 
   /**

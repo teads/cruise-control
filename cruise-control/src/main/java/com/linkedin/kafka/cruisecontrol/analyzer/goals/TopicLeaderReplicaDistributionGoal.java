@@ -47,11 +47,11 @@ import static com.linkedin.kafka.cruisecontrol.analyzer.goals.GoalUtils.replicaS
 /**
  * Soft goal to balance collocations of leader replicas of the same topic over alive brokers not excluded for replica moves.
  * <ul>
- * <li>Under: (the average number of topic replicas per broker) * (1 + topic replica count balance percentage)</li>
- * <li>Above: (the average number of topic replicas per broker) * Math.max(0, 1 - topic replica count balance percentage)</li>
+ * <li>Under: (the average number of topic leader replicas per broker) * (1 + topic replica count balance percentage)</li>
+ * <li>Above: (the average number of topic leader replicas per broker) * Math.max(0, 1 - topic replica count balance percentage)</li>
  * </ul>
  *
- * @see com.linkedin.kafka.cruisecontrol.config.constants.AnalyzerConfig#TOPIC_REPLICA_COUNT_BALANCE_THRESHOLD_CONFIG
+ * @see com.linkedin.kafka.cruisecontrol.config.constants.AnalyzerConfig#TOPIC_LEADER_REPLICA_COUNT_BALANCE_THRESHOLD_CONFIG
  * @see com.linkedin.kafka.cruisecontrol.config.constants.AnalyzerConfig#GOAL_VIOLATION_DISTRIBUTION_THRESHOLD_MULTIPLIER_CONFIG
  * @see #balancePercentageWithMargin(OptimizationOptions)
  */
@@ -90,20 +90,18 @@ public class TopicLeaderReplicaDistributionGoal extends AbstractGoal {
 
   /**
    * To avoid churns, we add a balance margin to the user specified rebalance threshold. e.g. when user sets the
-   * threshold to be {@link BalancingConstraint#topicReplicaBalancePercentage()}, we use
-   * ({@link BalancingConstraint#topicReplicaBalancePercentage()}-1)*{@link #BALANCE_MARGIN} instead.
+   * threshold to be {@link BalancingConstraint#topicLeaderReplicaBalancePercentage()}, we use
+   * ({@link BalancingConstraint#topicLeaderReplicaBalancePercentage()}-1)*{@link #BALANCE_MARGIN} instead.
    *
    * @param optimizationOptions Options to adjust balance percentage with margin in case goal optimization is triggered
    * by goal violation detector.
    * @return The rebalance threshold with a margin.
    */
   private double balancePercentageWithMargin(OptimizationOptions optimizationOptions) {
-    // TODO: for now we use the same setting as TopicReplicaDistributionGoal i.e. TOPIC_REPLICA_COUNT_BALANCE_THRESHOLD_CONFIG.
-    //  Create a specific one
     double balancePercentage = optimizationOptions.isTriggeredByGoalViolation()
-                               ? _balancingConstraint.topicReplicaBalancePercentage()
+                               ? _balancingConstraint.topicLeaderReplicaBalancePercentage()
                                  * _balancingConstraint.goalViolationDistributionThresholdMultiplier()
-                               : _balancingConstraint.topicReplicaBalancePercentage();
+                               : _balancingConstraint.topicLeaderReplicaBalancePercentage();
 
     return (balancePercentage - 1) * BALANCE_MARGIN;
   }
@@ -123,11 +121,11 @@ public class TopicLeaderReplicaDistributionGoal extends AbstractGoal {
     int minLimit;
     int maxLimit;
     if (isLowerLimit) {
-      maxLimit = Math.max(0, (int) (Math.floor(average) - _balancingConstraint.topicReplicaBalanceMinGap()));
-      minLimit = Math.max(0, (int) (Math.floor(average) - _balancingConstraint.topicReplicaBalanceMaxGap()));
+      maxLimit = Math.max(0, (int) (Math.floor(average) - _balancingConstraint.topicLeaderReplicaBalanceMinGap()));
+      minLimit = Math.max(0, (int) (Math.floor(average) - _balancingConstraint.topicLeaderReplicaBalanceMaxGap()));
     } else {
-      minLimit = (int) (Math.ceil(average) + _balancingConstraint.topicReplicaBalanceMinGap());
-      maxLimit = (int) (Math.ceil(average) + _balancingConstraint.topicReplicaBalanceMaxGap());
+      minLimit = (int) (Math.ceil(average) + _balancingConstraint.topicLeaderReplicaBalanceMinGap());
+      maxLimit = (int) (Math.ceil(average) + _balancingConstraint.topicLeaderReplicaBalanceMaxGap());
     }
     return Math.max(minLimit, Math.min(computedLimit, maxLimit));
   }
