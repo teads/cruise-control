@@ -396,8 +396,17 @@ public class TopicLeaderReplicaDistributionGoal extends AbstractGoal {
                                     OptimizationOptions optimizationOptions) {
     LOG.debug("Rebalancing broker {} [limits] lower: {} upper: {}.", broker.id(), _balanceLowerLimitByTopic, _balanceUpperLimitByTopic);
 
-    for (String topic : broker.topics()) {
-      // FIXME: Is it OK to check excluded topics when _fixOfflineReplicasOnly is true?
+    /**
+     * FIXME: ConcurrentModificationException
+     * java.util.ConcurrentModificationException
+     * at java.base/java.util.HashMap$HashIterator.nextNode(HashMap.java:1493)
+     * at java.base/java.util.HashMap$KeyIterator.next(HashMap.java:1516)
+     * at [...].goals.TopicLeaderReplicaDistributionGoal.rebalanceForBroker(TopicLeaderReplicaDistributionGoal.java:399)
+     * at [...].goals.AbstractGoal.optimize(AbstractGoal.java:81)
+     * at com.linkedin.kafka.cruisecontrol.analyzer.GoalOptimizer.optimizations(GoalOptimizer.java:442)
+     * at com.linkedin.kafka.cruisecontrol.KafkaCruiseControl.optimizations(KafkaCruiseControl.java:564)
+     */
+    for (String topic : broker.topics()) { // <-- ConcurrentModificationException (TopicLeaderReplicaDistributionGoal.java:399)
       if (isTopicExcludedFromRebalance(topic)) {
         continue;
       }
