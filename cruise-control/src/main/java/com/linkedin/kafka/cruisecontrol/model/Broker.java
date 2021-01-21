@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -88,7 +89,7 @@ public class Broker implements Serializable, Comparable<Broker> {
 
     _replicas = new HashSet<>();
     _leaderReplicas = new HashSet<>();
-    _topicReplicas = new HashMap<>();
+    _topicReplicas = new ConcurrentHashMap<>();
     _sortedReplicas = new HashMap<>();
     _immigrantReplicas = new HashSet<>();
     _currentOfflineReplicas = new HashSet<>();
